@@ -47,7 +47,31 @@ public class KoanMethodRunner {
 		}
 		return KoanMethodResult.PASSED;
 	}
-	
+
+    public static KoanMethodResult runDoNotCheckSource(Object suite, KoanMethod koan){
+        try {
+            Method method = koan.getMethod();
+            method.setAccessible(true);
+            method.invoke(suite);
+        } catch (Throwable t) {
+            Throwable tempException = t;
+            String message = ExceptionUtils.convertToPopulatedStackTraceString(t);
+            while(tempException != null){
+                if(tempException instanceof KoanIncompleteException){
+                    t = tempException;
+                    message = t.getMessage();
+                    if(message.contains(Strings.getMessage(EXPECTED_PROPERTY_KEY) + EXPECTED_LEFT + __ + EXPECTED_RIGHT)) {
+                        logExpectationOnWrongSideWarning(suite.getClass(), koan.getMethod());
+                    }
+                    break;
+                }
+                tempException = tempException.getCause();
+            }
+            return new KoanMethodResult(koan, message, getOriginalLineNumberWithoutCheck(t, suite.getClass()));
+        }
+        return KoanMethodResult.PASSED;
+    }
+
 	private static void logExpectationOnWrongSideWarning(Class<?> firstFailingSuite, Method firstFailingMethod) {
 		Logger.getLogger(CommandLineArgumentRunner.class.getSimpleName()).severe(
 				new StringBuilder(
@@ -83,5 +107,20 @@ public class KoanMethodRunner {
 		}
 		return null;
 	}
-	
+
+    static String getOriginalLineNumberWithoutCheck(Throwable t, Class<?> failingSuite){
+        if(failingSuite != null){
+            String[] lines = ExceptionUtils.convertToPopulatedStackTraceString(t).split(EOLS);
+            for(int i = lines.length - 1; i >= 0; --i){
+                String line = lines[i];
+                if(line.contains(failingSuite.getName())){
+                    int start = line.indexOf(KoanConstants.LINE_NO_START)+KoanConstants.LINE_NO_START.length();
+                    int end = line.lastIndexOf(KoanConstants.LINE_NO_END);
+                    end = end > line.length() ? line.length() : end;
+                    return line.substring(start, end);
+                }
+            }
+        }
+        return null;
+    }
 }

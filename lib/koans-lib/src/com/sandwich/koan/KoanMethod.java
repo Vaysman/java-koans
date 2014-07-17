@@ -38,7 +38,7 @@ public class KoanMethod {
 			throw new IllegalArgumentException("method may not be null");
 		}
 		this.method = method;
-		this.lesson = new RbVariableInjector(lesson, method).injectLessonVariables();
+		this.lesson = "removed by vaisman"; //new RbVariableInjector(lesson, method).injectLessonVariables();
 		this.displayIncompleteException = displayIncompleteException;
 	}
 
