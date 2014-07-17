@@ -10,3 +10,6 @@ koans/data*
 .project
 koans/app/data
 lib/file-compiler/bin
+.idea/
+out/
+*.iml
